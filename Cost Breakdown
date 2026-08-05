@@ -1,0 +1,9 @@
+
+For 100 10-K filings (approximately a mid-size sector analysis):
+
+Step	Model	Cost
+Scraping 100 filings	Apify EDGAR actor	~$0.40
+Embedding ~50,000 chunks	text-embedding-3-small	~$0.05
+100 queries to Claude Sonnet	claude-sonnet-4-6	~$3.00
+Total		~$3.45
+A coverage level that would cost thousands of dollars from Bloomberg or FactSet costs under $5 with this pipeline.
