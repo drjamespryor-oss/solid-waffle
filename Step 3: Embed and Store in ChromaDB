@@ -1,0 +1,39 @@
+
+def embed_chunks(chunks: list[dict], batch_size: int = 100):
+    """Embed chunks and store in ChromaDB."""
+    
+    print(f"Embedding {len(chunks)} chunks...")
+    
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i:i + batch_size]
+        texts = [c["text"] for c in batch]
+        
+        # Embed with OpenAI text-embedding-3-small (~$0.02 per million tokens)
+        response = openai_client.embeddings.create(
+            model="text-embedding-3-small",
+            input=texts,
+        )
+        
+        embeddings = [r.embedding for r in response.data]
+        ids = [c["chunk_id"] for c in batch]
+        metadatas = [{
+            "ticker": c["ticker"],
+            "form_type": c["form_type"],
+            "filed_date": c["filed_date"],
+            "section": c["section"],
+            "filing_url": c["filing_url"],
+        } for c in batch]
+        
+        collection.add(
+            embeddings=embeddings,
+            documents=texts,
+            metadatas=metadatas,
+            ids=ids,
+        )
+        
+        print(f"  Stored batch {i // batch_size + 1}/{(len(chunks) - 1) // batch_size + 1}")
+    
+    print(f"Done. Collection size: {collection.count()} chunks")
+
+
+embed_chunks(all_chunks)
