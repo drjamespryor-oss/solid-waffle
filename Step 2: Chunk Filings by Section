@@ -1,0 +1,64 @@
+
+def chunk_filing(filing: dict, max_tokens: int = 400) -> list[dict]:
+    """
+    Chunk a filing into semantically meaningful pieces.
+    Returns list of chunks with metadata for citation.
+    """
+    
+    chunks = []
+    full_text = filing.get("fullText", "") or filing.get("text", "")
+    ticker = filing.get("ticker", "unknown")
+    form_type = filing.get("formType", "")
+    filed_date = filing.get("filedAt", "")[:10]  # YYYY-MM-DD
+    filing_url = filing.get("linkToFilingDetails", "")
+    
+    if not full_text:
+        return chunks
+    
+    # Split on EDGAR item headers (Item 1, Item 1A, Item 2, etc.)
+    import re
+    section_pattern = re.compile(
+        r'(ITEM\s+\d+[A-Z]?\.\s+[A-Z][A-Z\s,&]+)',
+        re.IGNORECASE
+    )
+    
+    sections = section_pattern.split(full_text)
+    
+    current_section = "General"
+    for i, segment in enumerate(sections):
+        if section_pattern.match(segment.strip()):
+            current_section = segment.strip()
+            continue
+        
+        if len(segment.strip()) < 100:
+            continue
+        
+        # Further split long sections into overlapping windows
+        tokens = enc.encode(segment)
+        
+        for j in range(0, len(tokens), max_tokens - 50):
+            chunk_tokens = tokens[j:j + max_tokens]
+            chunk_text = enc.decode(chunk_tokens)
+            
+            if len(chunk_text.strip()) < 50:
+                continue
+            
+            chunks.append({
+                "text": chunk_text,
+                "ticker": ticker,
+                "form_type": form_type,
+                "filed_date": filed_date,
+                "section": current_section,
+                "filing_url": filing_url,
+                "chunk_id": f"{ticker}_{form_type}_{filed_date}_{i}_{j}",
+            })
+    
+    return chunks
+
+
+# Process all fetched filings
+all_chunks = []
+for filing in filings:
+    chunks = chunk_filing(filing)
+    all_chunks.extend(chunks)
+    print(f"{filing.get('ticker')} {filing.get('formType')} {filing.get('filedAt', '')[:10]}: {len(chunks)} chunks")
