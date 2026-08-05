@@ -1,0 +1,23 @@
+lf.
+
+def fetch_edgar_filings(
+    ticker: str,
+    form_types: list[str] = ["10-K", "10-Q"],
+    max_filings: int = 10,
+) -> list[dict]:
+    """Fetch SEC filings for a company by ticker symbol."""
+    
+    run = apify.actor("themineworks/sec-edgar-filings").call(run_input={
+        "ticker": ticker,
+        "formTypes": form_types,
+        "maxFilings": max_filings,
+        "includeFullText": True,
+    })
+    
+    filings = list(apify.dataset(run["defaultDatasetId"]).iterate_items())
+    print(f"Fetched {len(filings)} {form_types} filings for {ticker}")
+    return filings
+
+
+# Example: fetch Apple's last 3 annual reports
+filings = fetch_edgar_filings("AAPL", form_types=[
