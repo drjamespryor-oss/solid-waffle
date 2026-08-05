@@ -1,0 +1,59 @@
+
+def query_filings(question: str, top_k: int = 5) -> str:
+    """
+    Answer a question about EDGAR filings with source citations.
+    """
+    
+    # Embed the question
+    q_embedding = openai_client.embeddings.create(
+        model="text-embedding-3-small",
+        input=[question],
+    ).data[0].embedding
+    
+    # Retrieve top-k relevant chunks
+    results = collection.query(
+        query_embeddings=[q_embedding],
+        n_results=top_k,
+        include=["documents", "metadatas", "distances"],
+    )
+    
+    # Build context with source labels
+    context_parts = []
+    for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
+        source_label = f"[{meta['ticker']} {meta['form_type']} {meta['filed_date']} — {meta['section']}]"
+        context_parts.append(f"{source_label}\n{doc}")
+    
+    context = "\n\n---\n\n".join(context_parts)
+    
+    response = claude.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1500,
+        messages=[{
+            "role": "user",
+            "content": f"""Answer the following question using ONLY the provided EDGAR filing excerpts.
+For every claim you make, cite the specific source in brackets using the format [TICKER FORM_TYPE DATE — SECTION].
+If the excerpts do not contain enough information to answer, say so explicitly.
+
+QUESTION: {question}
+
+FILING EXCERPTS:
+{context}
+
+Answer with citations:"""
+        }]
+    )
+    
+    return response.content[0].text
+
+
+# Example queries
+questions = [
+    "How has Apple described its AI and machine learning strategy in recent annual reports?",
+    "What supply chain risks did Apple highlight in its most recent 10-K?",
+    "How did Apple's revenue from services change year over year based on the MD&A?",
+]
+
+for q in questions:
+    print(f"\nQ: {q}")
+    print("-" * 60)
+    print(query_filings(q))
