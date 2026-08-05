@@ -1,0 +1,18 @@
+
+pip install apify-client anthropic openai chromadb python-dotenv tiktoken
+import os
+import json
+from apify_client import ApifyClient
+import anthropic
+import chromadb
+from openai import OpenAI
+import tiktoken
+
+apify = ApifyClient(os.environ["APIFY_TOKEN"])
+claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+chroma = chromadb.PersistentClient(path="./edgar_chroma")
+collection = chroma.get_or_create_collection("edgar_filings")
+
+enc = tiktoken.get_encoding("cl100k_base")
