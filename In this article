@@ -1,0 +1,33 @@
+
+01
+Why EDGAR Filings Are Ideal RAG Source Material
+02
+Setup
+03
+Step 1: Scrape Filings From EDGAR
+04
+Step 2: Chunk Filings by Section
+05
+Step 3: Embed and Store in ChromaDB
+06
+Step 4: Query With Claude and Force Source Citation
+07
+Multi-Company Comparative Analysis
+08
+Cost Breakdown
+09
+Frequently Asked Questions
+The SEC EDGAR database contains structured financial disclosures for every US public company going back decades. 10-K annual reports, 10-Q quarterlies, 8-K material event notices — all free, all authoritative, all machine-readable. For anyone building financial AI applications, this is the most valuable RAG data source that almost no one is using well.
+
+TL;DR: Build a RAG pipeline on SEC EDGAR in 4 steps: scrape filings with the EDGAR Apify actor (returns clean structured JSON with full text), chunk by heading and section, embed with OpenAI or a local model, then query with Claude using a prompt that forces source citation. The result is a financial Q&A system that answers questions like “How did Apple describe its AI strategy risk in its last three 10-K filings?” with specific section references. Full pipeline costs under $5 for 100 filings.
+
+The challenge is not access — EDGAR is public. The challenge is extraction and chunking. A single 10-K can be 200 pages of HTML, XBRL, and footnotes. Getting clean text that a vector database can use requires preprocessing that most tutorials skip. This guide covers the entire pipeline end to end.
+
+Why EDGAR Filings Are Ideal RAG Source Material
+Three properties make EDGAR filings unusually good for RAG:
+
+Structured by section. 10-K filings follow a mandatory structure: Item 1 (Business), Item 1A (Risk Factors), Item 7 (MD&A), Item 8 (Financial Statements). This structure becomes your chunking boundary. You always know what kind of information is in each chunk.
+
+Authoritative and dated. Every statement in a 10-K is signed by the CEO and CFO under penalty of law. Every filing has an exact date. When your RAG system cites a source, it can cite a specific filing date and section, giving the answer verifiable provenance.
+
+Comparative across time. The same company files the same form types year after year. You can build a system that compares how management described AI risk in 2022 versus 2025, or tracks how inventory language changed before a supply chain crisis
