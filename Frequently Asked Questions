@@ -1,0 +1,19 @@
+Which EDGAR form types are most useful for different use cases?
+
+For long-term strategy analysis, 10-K (annual report) is the primary source. For quarterly earnings and guidance, 10-Q. For material events — acquisitions, management changes, earnings pre-announcements — 8-K. For insider trading signals, Form 4 (ownership changes). For activist investor positions, Schedule 13D/G. The EDGAR actor supports all major form types.
+
+How do you handle XBRL and structured financial data versus narrative text?
+
+10-K filings contain both XBRL-tagged financial statements (balance sheet, income statement) and unstructured narrative sections (MD&A, Risk Factors). For RAG, the narrative sections are most valuable. For quantitative analysis, XBRL tags give you clean numeric data. The EDGAR actor returns both: structured financial facts and full narrative text. Use the narrative text for RAG embeddings and the financial facts for numeric comparisons.
+
+How do you handle the 200-page length of some 10-K filings?
+
+Heading-based section chunking limits each chunk to a semantically coherent unit (one EDGAR item section), then applies a sliding window with overlap to handle long sections. The key is preserving section metadata on every chunk so citations remain meaningful even when a section spans 30 pages.
+
+What embedding model works best for financial text?
+
+OpenAI’s text-embedding-3-small works well for general financial language. For deep quantitative analysis, consider FinBERT or a finance-specific embedding model. The tradeoff: general embeddings handle context better; domain-specific embeddings handle financial terminology and abbreviations more precisely. For most EDGAR RAG applications, text-embedding-3-small is sufficient.
+
+How do you keep the pipeline updated as new filings are released?
+
+Schedule a weekly Apify actor run that fetches filings from the past 7 days. Compute chunk IDs using a deterministic hash of ticker + form type + filing date + chunk index. Skip any chunk_id already present in ChromaDB. New filings flow in automatically; existing embeddings are never re-computed. At typical filing rates, weekly maintenance runs take under 2 minutes.
