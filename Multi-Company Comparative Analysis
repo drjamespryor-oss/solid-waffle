@@ -1,0 +1,15 @@
+
+# Load filings for multiple companies in the same sector
+companies = ["AAPL", "MSFT", "GOOGL", "META", "AMZN"]
+for ticker in companies:
+    company_filings = fetch_edgar_filings(ticker, form_types=["10-K"], max_filings=2)
+    chunks = []
+    for f in company_filings:
+        chunks.extend(chunk_filing(f))
+    embed_chunks(chunks)
+
+# Now ask comparative questions
+answer = query_filings(
+    "How do Apple, Microsoft, and Google each describe the risks of AI regulation in their most recent 10-K filings?"
+)
+print(answer)
